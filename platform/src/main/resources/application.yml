@@ -35,6 +35,10 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  huggingface:
+    token: ${HF_TOKEN}
+  groq:
+    api-key: ${GROQ_API_KEY}
 
 springdoc:
   swagger-ui:

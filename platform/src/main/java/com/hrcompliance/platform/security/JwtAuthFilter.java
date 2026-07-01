@@ -1,5 +1,6 @@
 package com.hrcompliance.platform.security;
 
+import com.hrcompliance.platform.tenant.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,19 +41,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         if (jwtUtil.isTokenValid(token)) {
-            UUID userId = jwtUtil.extractUserId(token);
+            UUID userId    = jwtUtil.extractUserId(token);
             UUID companyId = jwtUtil.extractCompanyId(token);
-            String role = jwtUtil.extractRole(token);
-            String email = jwtUtil.extractClaims(token).get("email", String.class);
+            String role    = jwtUtil.extractRole(token);
+            String email   = jwtUtil.extractClaims(token).get("email", String.class);
+
+            // Set tenant context for this request thread
+            TenantContext.setCurrentTenant(companyId);
 
             AuthenticatedUser principal = new AuthenticatedUser(userId, companyId, email, role);
-
             var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-
-            var authToken = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+            var authToken   = new UsernamePasswordAuthenticationToken(principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            // Always clear tenant context after request completes
+            // to prevent thread-local leaking into the next request
+            TenantContext.clear();
+        }
     }
 }

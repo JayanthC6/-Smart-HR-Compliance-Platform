@@ -20,9 +20,11 @@ import java.util.UUID;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService blacklistService;
 
-    public JwtAuthFilter(JwtUtil jwtUtil) {
+    public JwtAuthFilter(JwtUtil jwtUtil, TokenBlacklistService blacklistService) {
         this.jwtUtil = jwtUtil;
+        this.blacklistService = blacklistService;
     }
 
     @Override
@@ -40,13 +42,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
+        // Reject blacklisted tokens (logged-out sessions)
+        if (blacklistService.isBlacklisted(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"error\":\"Token has been revoked. Please login again.\"}");
+            return;
+        }
+
         if (jwtUtil.isTokenValid(token)) {
             UUID userId    = jwtUtil.extractUserId(token);
             UUID companyId = jwtUtil.extractCompanyId(token);
             String role    = jwtUtil.extractRole(token);
             String email   = jwtUtil.extractClaims(token).get("email", String.class);
 
-            // Set tenant context for this request thread
             TenantContext.setCurrentTenant(companyId);
 
             AuthenticatedUser principal = new AuthenticatedUser(userId, companyId, email, role);
@@ -58,8 +66,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } finally {
-            // Always clear tenant context after request completes
-            // to prevent thread-local leaking into the next request
             TenantContext.clear();
         }
     }

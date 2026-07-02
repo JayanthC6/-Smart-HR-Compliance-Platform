@@ -6,10 +6,12 @@ import com.hrcompliance.platform.compliance.PolicyChunkRepository;
 import com.hrcompliance.platform.compliance.PolicyRepository;
 import com.hrcompliance.platform.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,19 +26,20 @@ public class RagService {
     private final PolicyChunkRepository chunkRepository;
     private final EmbeddingService embeddingService;
     private final GroqService groqService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     private static final int CHUNK_SIZE = 500;
     private static final int TOP_K = 3;
+    private static final String RAG_CACHE_PREFIX = "rag:";
+    private static final long RAG_CACHE_TTL_MINUTES = 15;
 
     @Transactional
     public void embedPolicy(UUID policyId) {
         Policy policy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new IllegalArgumentException("Policy not found"));
 
-        // Delete old chunks if re-embedding
         chunkRepository.deleteByPolicyId(policyId);
 
-        // Split content into chunks
         List<String> chunks = splitIntoChunks(policy.getContent(), CHUNK_SIZE);
 
         AuthenticatedUser user = getCurrentUser();
@@ -58,6 +61,13 @@ public class RagService {
 
     public String askQuestion(String question) {
         AuthenticatedUser user = getCurrentUser();
+
+        // Check Redis cache first — same question from same company returns instantly
+        String cacheKey = RAG_CACHE_PREFIX + user.getCompanyId() + ":" + question.toLowerCase().trim();
+        String cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
 
         // Embed the question
         List<Double> questionEmbedding = embeddingService.embed(question);
@@ -87,17 +97,24 @@ public class RagService {
             context.append(sc.chunk().getChunkText()).append("\n\n");
         }
 
-        // Build prompt and call Groq
         String systemPrompt = """
                 You are an HR policy assistant. Answer the employee's question
                 based ONLY on the policy context provided below. If the answer
                 is not in the context, say "I couldn't find this in our current
                 policies. Please contact HR directly."
-                
+
                 POLICY CONTEXT:
                 """ + context;
 
-        return groqService.chat(systemPrompt, question);
+        String answer = groqService.chat(systemPrompt, question);
+
+        // Cache the answer with 15-minute TTL
+        redisTemplate.opsForValue().set(
+                cacheKey, answer,
+                Duration.ofMinutes(RAG_CACHE_TTL_MINUTES)
+        );
+
+        return answer;
     }
 
     private List<String> splitIntoChunks(String text, int chunkSize) {

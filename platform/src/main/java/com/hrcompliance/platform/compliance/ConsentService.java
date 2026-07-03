@@ -1,5 +1,6 @@
 package com.hrcompliance.platform.compliance;
 
+import com.hrcompliance.platform.audit.AuditService;
 import com.hrcompliance.platform.compliance.dto.ConsentResponse;
 import com.hrcompliance.platform.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class ConsentService {
 
     private final ConsentRepository consentRepository;
     private final PolicyRepository policyRepository;
+    private final AuditService auditService;
 
     @Transactional
     public ConsentResponse acceptPolicy(UUID policyId) {
@@ -39,6 +41,9 @@ public class ConsentService {
         consent.setAcceptedAt(LocalDateTime.now());
         consent.setCreatedAt(LocalDateTime.now());
         consent = consentRepository.save(consent);
+
+        auditService.log("POLICY_ACCEPTED", "Consent", consent.getId(),
+                "Employee accepted policy: " + policy.getTitle());
 
         return new ConsentResponse(
                 consent.getId(),

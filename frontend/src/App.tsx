@@ -10,6 +10,8 @@ import EmployeeHome from './pages/employee/Home';
 import EmployeePolicies from './pages/employee/Policies';
 import EmployeeTasks from './pages/employee/Tasks';
 import AiChat from './pages/employee/AiChat';
+import CompliancePage from './pages/admin/Compliance';
+import AuditPage from './pages/admin/AuditLog';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -24,6 +26,8 @@ function AppRoutes() {
       <Route path="/admin" element={<PrivateRoute><Layout><AdminDashboard /></Layout></PrivateRoute>} />
       <Route path="/admin/policies" element={<PrivateRoute><Layout><PoliciesPage /></Layout></PrivateRoute>} />
       <Route path="/admin/onboarding" element={<PrivateRoute><Layout><OnboardingPage /></Layout></PrivateRoute>} />
+      <Route path="/admin/compliance" element={<PrivateRoute><Layout><CompliancePage /></Layout></PrivateRoute>} />
+      <Route path="/admin/audit" element={<PrivateRoute><Layout><AuditPage /></Layout></PrivateRoute>} />
       <Route path="/employee" element={<PrivateRoute><Layout><EmployeeHome /></Layout></PrivateRoute>} />
       <Route path="/employee/policies" element={<PrivateRoute><Layout><EmployeePolicies /></Layout></PrivateRoute>} />
       <Route path="/employee/tasks" element={<PrivateRoute><Layout><EmployeeTasks /></Layout></PrivateRoute>} />

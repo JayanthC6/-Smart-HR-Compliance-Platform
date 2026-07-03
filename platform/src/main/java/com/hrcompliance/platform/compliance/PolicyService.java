@@ -1,5 +1,6 @@
 package com.hrcompliance.platform.compliance;
 
+import com.hrcompliance.platform.audit.AuditService;
 import com.hrcompliance.platform.compliance.dto.CreatePolicyRequest;
 import com.hrcompliance.platform.compliance.dto.PolicyResponse;
 import com.hrcompliance.platform.security.AuthenticatedUser;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class PolicyService {
 
     private final PolicyRepository policyRepository;
+    private final AuditService auditService;
 
     @Transactional
     public PolicyResponse createPolicy(CreatePolicyRequest request) {
@@ -32,6 +34,8 @@ public class PolicyService {
         policy.setCreatedAt(LocalDateTime.now());
 
         policy = policyRepository.save(policy);
+        auditService.log("POLICY_CREATED", "Policy", policy.getId(),
+                "Created policy: " + policy.getTitle() + " (v" + policy.getVersion() + ")");
         return toResponse(policy);
     }
 

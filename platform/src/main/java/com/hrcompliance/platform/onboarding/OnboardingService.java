@@ -1,5 +1,6 @@
 package com.hrcompliance.platform.onboarding;
 
+import com.hrcompliance.platform.audit.AuditService;
 import com.hrcompliance.platform.onboarding.dto.CreateTaskRequest;
 import com.hrcompliance.platform.onboarding.dto.DocumentResponse;
 import com.hrcompliance.platform.onboarding.dto.TaskResponse;
@@ -25,6 +26,7 @@ public class OnboardingService {
 
     private final OnboardingTaskRepository taskRepository;
     private final DocumentRepository documentRepository;
+    private final AuditService auditService;
 
     private static final String UPLOAD_DIR = "uploads/";
 
@@ -41,6 +43,9 @@ public class OnboardingService {
         task.setCreatedAt(LocalDateTime.now());
         task = taskRepository.save(task);
 
+        auditService.log("TASK_CREATED", "OnboardingTask", task.getId(),
+                "Assigned task '" + task.getTitle() + "' to user " + request.getUserId());
+
         return toTaskResponse(task);
     }
 
@@ -50,6 +55,10 @@ public class OnboardingService {
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
         task.setStatus(status);
         task = taskRepository.save(task);
+
+        auditService.log("TASK_STATUS_UPDATED", "OnboardingTask", task.getId(),
+                "Task '" + task.getTitle() + "' status changed to " + status.name());
+
         return toTaskResponse(task);
     }
 

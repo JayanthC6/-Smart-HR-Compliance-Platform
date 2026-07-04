@@ -1,5 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import api from '../../api/axios';
+import { 
+  Check, 
+  CheckCircle2, 
+  AlertTriangle, 
+  UploadCloud, 
+  FileText, 
+  Calendar, 
+  ArrowRight, 
+  Inbox, 
+  Loader2 
+} from 'lucide-react';
 
 type Toast = { msg: string; type: 'success' | 'error' } | null;
 
@@ -78,8 +89,9 @@ export default function EmployeeTasks() {
   return (
     <div>
       {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          {toast.type === 'success' ? '✅' : '⚠️'} {toast.msg}
+        <div className={`toast toast-${toast.type}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />} 
+          <span>{toast.msg}</span>
         </div>
       )}
 
@@ -118,8 +130,8 @@ export default function EmployeeTasks() {
               </div>
             ) : total === 0 ? (
               <div style={styles.emptyState}>
-                <p style={{ fontSize: '32px', marginBottom: '8px' }}>📭</p>
-                <p style={{ color: 'var(--text-muted)' }}>No tasks assigned yet.</p>
+                <Inbox size={48} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                <p style={{ color: 'var(--text-muted)', fontWeight: 500 }}>No tasks assigned yet.</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>
                   Your manager will assign onboarding tasks here.
                 </p>
@@ -135,6 +147,11 @@ export default function EmployeeTasks() {
                       : t.status === 'IN_PROGRESS'
                       ? 'var(--accent)'
                       : 'var(--text-muted)',
+                    boxShadow: t.status === 'COMPLETED'
+                      ? '0 0 8px var(--success)'
+                      : t.status === 'IN_PROGRESS'
+                      ? '0 0 8px var(--accent)'
+                      : 'none'
                   }} />
 
                   <div style={{ flex: 1 }}>
@@ -146,7 +163,10 @@ export default function EmployeeTasks() {
                       {t.title}
                     </p>
                     {t.dueDate && (
-                      <p style={styles.taskDue}>📅 Due: {t.dueDate}</p>
+                      <p style={styles.taskDue}>
+                        <Calendar size={12} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
+                        Due: {t.dueDate}
+                      </p>
                     )}
                   </div>
 
@@ -157,13 +177,18 @@ export default function EmployeeTasks() {
                     {NEXT_STATUS[t.status] && (
                       <button
                         className="btn-secondary"
-                        style={{ fontSize: '12px', padding: '5px 10px', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         onClick={() => updateStatus(t.id, NEXT_STATUS[t.status])}
                         disabled={updating === t.id}
                       >
-                        {updating === t.id
-                          ? <span className="spinner" />
-                          : `→ ${NEXT_STATUS[t.status].replace('_', ' ')}`}
+                        {updating === t.id ? (
+                          <Loader2 size={12} className="spinner" />
+                        ) : (
+                          <>
+                            <span>Mark {NEXT_STATUS[t.status].replace('_', ' ')}</span>
+                            <ArrowRight size={12} />
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -179,7 +204,7 @@ export default function EmployeeTasks() {
             <h2 style={styles.sectionTitle}>Documents</h2>
             <p style={styles.docHint}>Upload required documents for your onboarding</p>
 
-            <label style={styles.uploadZone}>
+            <label className="upload-dropzone">
               <input
                 ref={fileRef}
                 type="file"
@@ -187,21 +212,26 @@ export default function EmployeeTasks() {
                 onChange={handleUpload}
                 disabled={uploading}
               />
-              <span style={{ fontSize: '28px', display: 'block', marginBottom: '8px' }}>📁</span>
-              {uploading
-                ? <><span className="spinner" style={{ marginRight: 6 }} />Uploading...</>
-                : <><strong>Click to upload</strong> a file</>}
+              <UploadCloud size={32} style={{ color: 'var(--accent)', marginBottom: '8px' }} />
+              {uploading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Loader2 size={16} className="spinner" />
+                  <span>Uploading...</span>
+                </div>
+              ) : (
+                <span><strong>Click to upload</strong> or drag a file</span>
+              )}
             </label>
 
             {docs.length === 0 ? (
               <p style={styles.noDocsMsg}>No documents uploaded yet.</p>
             ) : (
-              <div style={{ marginTop: '16px' }}>
+              <div style={{ marginTop: '24px' }}>
                 <p style={styles.docsCount}>{docs.length} document{docs.length !== 1 ? 's' : ''} uploaded</p>
                 {docs.map((d: any) => (
                   <div key={d.id} style={styles.docRow}>
-                    <span style={{ fontSize: '18px' }}>📄</span>
-                    <div style={{ flex: 1 }}>
+                    <FileText size={18} style={{ color: 'var(--text-secondary)' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={styles.docName}>{d.originalName || d.fileName || 'Document'}</p>
                       {d.createdAt && (
                         <p style={styles.docDate}>
@@ -209,7 +239,9 @@ export default function EmployeeTasks() {
                         </p>
                       )}
                     </div>
-                    <span className="badge badge-success">✓</span>
+                    <span className="badge badge-success" style={{ padding: '3px 8px', borderRadius: '6px' }}>
+                      <Check size={12} />
+                    </span>
                   </div>
                 ))}
               </div>
@@ -222,8 +254,8 @@ export default function EmployeeTasks() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  heading:       { fontSize: '26px', fontWeight: 700, marginBottom: '4px' },
-  sub:           { color: 'var(--text-secondary)', marginBottom: '24px' },
+  heading:       { fontSize: '26px', fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.02em' },
+  sub:           { color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' },
   layout:        { display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px' },
   sectionTitle:  { fontSize: '15px', fontWeight: 600, marginBottom: '16px' },
   count:         { color: 'var(--text-muted)', fontWeight: 400 },
@@ -231,22 +263,16 @@ const styles: Record<string, React.CSSProperties> = {
   progressTitle: { fontWeight: 600, fontSize: '14px', marginBottom: '2px' },
   progressSub:   { color: 'var(--text-secondary)', fontSize: '12px' },
   pctBadge:      { background: 'var(--accent-light)', color: 'var(--accent)', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 },
-  emptyState:    { textAlign: 'center', padding: '32px 0' },
+  emptyState:    { textAlign: 'center', padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   taskRow:       { display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0', borderBottom: '1px solid var(--border)' },
   statusDot:     { width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0 },
   taskTitle:     { fontWeight: 500, fontSize: '14px', marginBottom: '2px' },
-  taskDue:       { color: 'var(--text-muted)', fontSize: '12px' },
+  taskDue:       { color: 'var(--text-muted)', fontSize: '12px', display: 'flex', alignItems: 'center' },
   taskActions:   { display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 },
   docHint:       { color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' },
-  uploadZone: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    border: '2px dashed var(--border)', borderRadius: '10px', padding: '24px 16px',
-    cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '13px',
-    textAlign: 'center', transition: 'border-color 0.2s',
-  },
   noDocsMsg:     { color: 'var(--text-muted)', fontSize: '13px', marginTop: '16px' },
-  docsCount:     { fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  docRow:        { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid var(--border)' },
-  docName:       { fontSize: '13px', fontWeight: 500 },
+  docsCount:     { fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  docRow:        { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', borderBottom: '1px solid var(--border)' },
+  docName:       { fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   docDate:       { fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' },
 };

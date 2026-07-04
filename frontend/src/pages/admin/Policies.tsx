@@ -1,5 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
+import { 
+  PlusCircle, 
+  Sparkles, 
+  Eye, 
+  EyeOff, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Loader2 
+} from 'lucide-react';
 
 type Toast = { msg: string; type: 'success' | 'error' } | null;
 
@@ -63,8 +72,9 @@ export default function PoliciesPage() {
     <div>
       {/* Toast */}
       {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          {toast.type === 'success' ? '✅' : '⚠️'} {toast.msg}
+        <div className={`toast toast-${toast.type}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />} 
+          <span>{toast.msg}</span>
         </div>
       )}
 
@@ -72,7 +82,7 @@ export default function PoliciesPage() {
       <p style={styles.sub}>Create and manage HR policies for your company</p>
 
       {/* Create form */}
-      <div className="card" style={{ marginBottom: '24px' }}>
+      <div className="card glass-panel" style={{ marginBottom: '24px' }}>
         <h2 style={styles.sectionTitle}>Create New Policy</h2>
         <form onSubmit={createPolicy} style={styles.form}>
           <div style={styles.field}>
@@ -101,15 +111,25 @@ export default function PoliciesPage() {
             type="submit"
             className="btn-primary"
             disabled={loading}
-            style={{ alignSelf: 'flex-start', minWidth: '140px' }}
+            style={{ alignSelf: 'flex-start', minWidth: '160px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
           >
-            {loading ? <><span className="spinner" style={{ marginRight: 8 }} />Creating...</> : '+ Create Policy'}
+            {loading ? (
+              <>
+                <Loader2 size={16} className="spinner" />
+                <span>Creating...</span>
+              </>
+            ) : (
+              <>
+                <PlusCircle size={16} />
+                <span>Create Policy</span>
+              </>
+            )}
           </button>
         </form>
       </div>
 
       {/* Policies list */}
-      <div className="card">
+      <div className="card glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={styles.sectionTitle}>
             All Policies {!fetching && <span style={styles.count}>({policies.length})</span>}
@@ -137,20 +157,38 @@ export default function PoliciesPage() {
                   <div style={styles.policyActions}>
                     <button
                       className="btn-secondary"
-                      style={{ fontSize: '12px', padding: '5px 12px' }}
+                      style={{ fontSize: '12px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       onClick={() => embedPolicy(p.id, p.title)}
                       disabled={embedding === p.id}
                     >
-                      {embedding === p.id
-                        ? <><span className="spinner" style={{ marginRight: 6 }} />Embedding...</>
-                        : '🤖 Embed for AI'}
+                      {embedding === p.id ? (
+                        <>
+                          <Loader2 size={12} className="spinner" />
+                          <span>Embedding...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={12} style={{ color: 'var(--warning)' }} />
+                          <span>Embed for AI</span>
+                        </>
+                      )}
                     </button>
                     <button
                       className="btn-secondary"
-                      style={{ fontSize: '12px', padding: '5px 12px' }}
+                      style={{ fontSize: '12px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       onClick={() => toggleExpand(p.id)}
                     >
-                      {expanded === p.id ? '▲ Collapse' : '▼ View Content'}
+                      {expanded === p.id ? (
+                        <>
+                          <EyeOff size={12} />
+                          <span>Collapse</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye size={12} />
+                          <span>View Content</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -175,8 +213,8 @@ export default function PoliciesPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  heading:       { fontSize: '26px', fontWeight: 700, marginBottom: '4px' },
-  sub:           { color: 'var(--text-secondary)', marginBottom: '24px' },
+  heading:       { fontSize: '26px', fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.02em' },
+  sub:           { color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' },
   sectionTitle:  { fontSize: '15px', fontWeight: 600 },
   count:         { color: 'var(--text-muted)', fontWeight: 400 },
   form:          { display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' },
@@ -190,7 +228,7 @@ const styles: Record<string, React.CSSProperties> = {
   policySnippet: { color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 },
   policyContent: {
     color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.7,
-    background: 'var(--bg-secondary)', borderRadius: '8px',
-    padding: '14px', marginTop: '4px', whiteSpace: 'pre-wrap',
+    background: 'var(--bg-secondary)', borderRadius: '12px',
+    padding: '16px', marginTop: '4px', whiteSpace: 'pre-wrap', border: '1px solid var(--border)'
   },
 };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
+import { FileText, CheckCircle2 } from 'lucide-react';
 
 export default function EmployeePolicies() {
   const [policies, setPolicies] = useState<any[]>([]);
@@ -31,16 +32,23 @@ export default function EmployeePolicies() {
           <p style={{ color: 'var(--text-muted)' }}>No policies published yet.</p>
         </div>
       ) : policies.map(p => (
-        <div key={p.id} className="card" style={{ marginBottom: '16px' }}>
+        <div key={p.id} className="card card-hover" style={{ marginBottom: '20px', padding: '28px' }}>
           <div style={styles.policyHeader}>
-            <div>
-              <h2 style={styles.policyTitle}>{p.title}</h2>
-              <span className="badge badge-info" style={{ marginTop: '6px' }}>v{p.version}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div style={styles.iconBox}>
+                <FileText size={20} style={{ color: 'var(--accent)' }} />
+              </div>
+              <div>
+                <h2 style={styles.policyTitle}>{p.title}</h2>
+                <span className="badge badge-info" style={{ marginTop: '6px' }}>v{p.version}</span>
+              </div>
             </div>
             {consents.includes(p.id) ? (
-              <span className="badge badge-success">✓ Accepted</span>
+              <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px' }}>
+                <CheckCircle2 size={13} /> Accepted
+              </span>
             ) : (
-              <button className="btn-primary" style={{ fontSize: '13px' }}
+              <button className="btn-primary" style={{ fontSize: '13px', padding: '10px 20px' }}
                 onClick={() => accept(p.id)} disabled={accepting === p.id}>
                 {accepting === p.id ? 'Accepting...' : 'Accept Policy'}
               </button>
@@ -54,9 +62,10 @@ export default function EmployeePolicies() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  heading: { fontSize: '24px', fontWeight: 700, marginBottom: '4px' },
-  sub: { color: 'var(--text-secondary)', marginBottom: '24px' },
-  policyHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' },
-  policyTitle: { fontSize: '17px', fontWeight: 600 },
-  policyContent: { color: 'var(--text-secondary)', lineHeight: 1.6 },
+  heading: { fontSize: '26px', fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.02em' },
+  sub: { color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' },
+  policyHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' },
+  policyTitle: { fontSize: '16px', fontWeight: 600, letterSpacing: '-0.01em' },
+  policyContent: { color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '14px', background: 'rgba(255, 255, 255, 0.01)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' },
+  iconBox: { width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }
 };

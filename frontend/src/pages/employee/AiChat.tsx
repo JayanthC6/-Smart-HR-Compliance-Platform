@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../../api/axios';
+import { Bot, User, Send, Loader2 } from 'lucide-react';
 
 interface Message { role: 'user' | 'ai'; text: string; }
 
@@ -33,26 +34,38 @@ export default function AiChat() {
       <h1 style={styles.heading}>AI Policy Assistant</h1>
       <p style={styles.sub}>Ask anything about your company policies</p>
 
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '65vh' }}>
+      <div className="card chat-container">
         <div style={styles.messages}>
           {messages.map((m, i) => (
             <div key={i} style={{ ...styles.message, alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <div style={{
-                ...styles.bubble,
-                background: m.role === 'user' ? 'var(--accent)' : 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-              }}>
-                {m.role === 'ai' && <span style={styles.aiLabel}>🤖 AI</span>}
-                <p style={{ lineHeight: 1.6 }}>{m.text}</p>
+              <div className={m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}>
+                {m.role === 'ai' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <Bot size={14} style={{ color: 'var(--accent)' }} />
+                    <span style={styles.aiLabel}>AI Assistant</span>
+                  </div>
+                )}
+                {m.role === 'user' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', justifyContent: 'flex-end' }}>
+                    <span style={styles.userLabel}>You</span>
+                    <User size={14} style={{ color: '#fff' }} />
+                  </div>
+                )}
+                <p style={{ lineHeight: 1.6, fontSize: '13px' }}>{m.text}</p>
               </div>
             </div>
           ))}
           {loading && (
             <div style={{ alignSelf: 'flex-start' }}>
-              <div style={{ ...styles.bubble, background: 'var(--bg-secondary)' }}>
-                <span style={styles.aiLabel}>🤖 AI</span>
-                <p style={{ color: 'var(--text-muted)' }}>Thinking...</p>
+              <div className="chat-bubble-ai">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <Bot size={14} style={{ color: 'var(--accent)' }} />
+                  <span style={styles.aiLabel}>AI Assistant</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                  <Loader2 size={14} className="spinner" />
+                  <p style={{ fontSize: '13px' }}>Thinking...</p>
+                </div>
               </div>
             </div>
           )}
@@ -69,8 +82,9 @@ export default function AiChat() {
             style={{ flex: 1 }}
           />
           <button className="btn-primary" onClick={send} disabled={loading || !input.trim()}
-            style={{ padding: '10px 20px', whiteSpace: 'nowrap' }}>
-            Send
+            style={{ padding: '12px 24px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span>Send</span>
+            <Send size={14} />
           </button>
         </div>
       </div>
@@ -79,11 +93,11 @@ export default function AiChat() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  heading: { fontSize: '24px', fontWeight: 700, marginBottom: '4px' },
-  sub: { color: 'var(--text-secondary)', marginBottom: '24px' },
+  heading: { fontSize: '26px', fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.02em' },
+  sub: { color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' },
   messages: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', padding: '8px 0', marginBottom: '16px' },
-  message: { display: 'flex', maxWidth: '80%' },
-  bubble: { padding: '14px 18px', borderRadius: '16px', maxWidth: '100%' },
-  aiLabel: { fontSize: '11px', fontWeight: 600, color: 'var(--accent)', display: 'block', marginBottom: '6px' },
+  message: { display: 'flex', maxWidth: '75%' },
+  aiLabel: { fontSize: '11px', fontWeight: 600, color: 'var(--accent)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  userLabel: { fontSize: '11px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' },
   inputRow: { display: 'flex', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px' },
 };

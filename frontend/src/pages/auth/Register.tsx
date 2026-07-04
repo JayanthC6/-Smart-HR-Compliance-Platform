@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
+import { Scale, Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
   const { login } = useAuth();
@@ -32,7 +33,7 @@ export default function Register() {
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.logo}>
-          <span style={styles.logoIcon}>⚖️</span>
+          <Scale size={32} style={{ color: 'var(--accent)' }} />
           <h1 style={styles.logoText}>HR Comply</h1>
         </div>
         <p style={styles.subtitle}>Register your company</p>
@@ -62,24 +63,27 @@ export default function Register() {
                 onChange={e => setForm({ ...form, password: e.target.value })}
                 placeholder="Min 8 characters"
                 required
-                style={{ paddingRight: '40px' }}
+                style={{ paddingRight: '44px' }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
-                  right: '10px',
+                  right: '12px',
                   top: '32px',
                   background: 'none',
                   border: 'none',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
                   fontSize: '16px',
-                  padding: '0'
+                  padding: '0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
-                {showPassword ? '🙈' : '👁️'}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
@@ -99,14 +103,21 @@ export default function Register() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  container: { width: '100%', maxWidth: '400px', padding: '40px', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)' },
-  logo: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' },
-  logoIcon: { fontSize: '28px' },
-  logoText: { fontSize: '22px', fontWeight: 700 },
-  subtitle: { color: 'var(--text-secondary)', marginBottom: '28px', fontSize: '14px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  field: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  label: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500 },
-  footer: { textAlign: 'center', marginTop: '20px', color: 'var(--text-secondary)', fontSize: '13px' },
+  page: { 
+    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%), radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%)'
+  },
+  container: { 
+    width: '100%', maxWidth: '440px', padding: '48px', 
+    background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)',
+    borderRadius: '24px', border: '1px solid var(--glass-border)',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+  },
+  logo: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '8px' },
+  logoText: { fontSize: '28px', fontWeight: 800, background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.03em' },
+  subtitle: { textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '36px', fontSize: '15px' },
+  form: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  field: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  label: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase' },
+  footer: { textAlign: 'center', marginTop: '28px', color: 'var(--text-secondary)', fontSize: '14px' },
 };

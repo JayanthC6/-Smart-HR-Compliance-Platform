@@ -1,6 +1,17 @@
 import { type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  BarChart3, 
+  FileText, 
+  CheckSquare, 
+  Shield, 
+  History, 
+  Home, 
+  Bot, 
+  LogOut, 
+  Scale 
+} from 'lucide-react';
 
 interface Props { children: ReactNode; }
 
@@ -10,16 +21,16 @@ export default function Layout({ children }: Props) {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
 
   const navLinks = isAdmin ? [
-    { to: '/admin',            label: '📊 Dashboard' },
-    { to: '/admin/policies',   label: '📋 Policies'  },
-    { to: '/admin/onboarding', label: '✅ Onboarding' },
-    { to: '/admin/compliance', label: '🛡️ Compliance' },
-    { to: '/admin/audit',      label: '📜 Audit Log' },
+    { to: '/admin',            label: 'Dashboard', icon: BarChart3 },
+    { to: '/admin/policies',   label: 'Policies',  icon: FileText  },
+    { to: '/admin/onboarding', label: 'Onboarding', icon: CheckSquare },
+    { to: '/admin/compliance', label: 'Compliance', icon: Shield },
+    { to: '/admin/audit',      label: 'Audit Log', icon: History },
   ] : [
-    { to: '/employee',           label: '🏠 Home'     },
-    { to: '/employee/policies',  label: '📋 Policies' },
-    { to: '/employee/tasks',     label: '✅ My Tasks'  },
-    { to: '/employee/ai',        label: '🤖 Ask AI'   },
+    { to: '/employee',           label: 'Home',     icon: Home },
+    { to: '/employee/policies',  label: 'Policies', icon: FileText },
+    { to: '/employee/tasks',     label: 'My Tasks',  icon: CheckSquare },
+    { to: '/employee/ai',        label: 'Ask AI',   icon: Bot },
   ];
 
   return (
@@ -27,12 +38,12 @@ export default function Layout({ children }: Props) {
       <aside style={styles.sidebar}>
         {/* Brand */}
         <div style={styles.brand}>
-          <span style={{ fontSize: '22px' }}>⚖️</span>
+          <Scale size={24} style={{ color: 'var(--accent)', flexShrink: 0 }} />
           <div>
             <p style={styles.brandText}>HR Comply</p>
             {user?.companyId && (
               <p style={styles.companyTag}>
-                {isAdmin ? '🏢 Admin' : '👤 Employee'}
+                {isAdmin ? 'Admin Portal' : 'Employee Portal'}
               </p>
             )}
           </div>
@@ -42,17 +53,16 @@ export default function Layout({ children }: Props) {
         <nav style={styles.nav}>
           {navLinks.map(link => {
             const active = location.pathname === link.to;
+            const Icon = link.icon;
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                style={{
-                  ...styles.navLink,
-                  ...(active ? styles.navLinkActive : {}),
-                }}
+                className={`sidebar-link ${active ? 'active' : ''}`}
               >
-                {active && <span style={styles.activeDot} />}
-                {link.label}
+                {active && <span className="sidebar-link-dot" />}
+                <Icon size={18} style={{ opacity: active ? 1 : 0.7 }} />
+                <span>{link.label}</span>
               </Link>
             );
           })}
@@ -69,10 +79,10 @@ export default function Layout({ children }: Props) {
           </div>
           <button
             onClick={logout}
-            style={styles.signOutBtn}
+            className="signout-btn"
             title="Sign out"
           >
-            ↪
+            <LogOut size={16} />
           </button>
         </div>
       </aside>
@@ -83,52 +93,49 @@ export default function Layout({ children }: Props) {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  shell:   { display: 'flex', minHeight: '100vh' },
+  shell:   { display: 'flex', minHeight: '100vh', position: 'relative' },
   sidebar: {
-    width: '230px', minHeight: '100vh',
-    background: 'var(--bg-secondary)',
-    borderRight: '1px solid var(--border)',
+    width: '260px', minHeight: '100vh',
+    background: 'var(--glass-bg)',
+    backdropFilter: 'var(--glass-blur)',
+    WebkitBackdropFilter: 'var(--glass-blur)',
+    borderRight: '1px solid var(--glass-border)',
     display: 'flex', flexDirection: 'column',
-    padding: '24px 12px',
+    padding: '32px 20px',
     position: 'fixed', top: 0, left: 0,
     zIndex: 100,
+    boxShadow: '4px 0 24px rgba(0,0,0,0.2)',
   },
   brand: {
-    display: 'flex', alignItems: 'center', gap: '10px',
-    marginBottom: '32px', padding: '0 8px',
+    display: 'flex', alignItems: 'center', gap: '12px',
+    marginBottom: '40px', padding: '0 8px',
   },
-  brandText:  { fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' },
-  companyTag: { fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' },
-  nav:        { display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 },
-  navLink: {
-    padding: '10px 12px', borderRadius: '8px', textDecoration: 'none',
-    color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500,
-    transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '6px',
-    position: 'relative',
+  brandText:  { 
+    fontSize: '20px', 
+    fontWeight: 800, 
+    background: 'var(--accent-gradient)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    letterSpacing: '-0.03em'
   },
-  navLinkActive: {
-    background: 'var(--accent-light)', color: 'var(--accent)', fontWeight: 600,
-  },
-  activeDot: {
-    width: '4px', height: '4px', borderRadius: '50%',
-    background: 'var(--accent)', display: 'inline-block', flexShrink: 0,
-  },
+  companyTag: { fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  nav:        { display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 },
   userSection: {
-    borderTop: '1px solid var(--border)', paddingTop: '16px',
-    display: 'flex', alignItems: 'center', gap: '10px',
+    borderTop: '1px solid var(--glass-border)', paddingTop: '20px',
+    display: 'flex', alignItems: 'center', gap: '12px',
+    background: 'rgba(0,0,0,0.2)',
+    padding: '16px',
+    borderRadius: '16px',
+    marginTop: 'auto'
   },
   userAvatar: {
-    width: '34px', height: '34px', borderRadius: '50%',
-    background: 'var(--accent-light)', color: 'var(--accent)',
+    width: '40px', height: '40px', borderRadius: '12px',
+    background: 'var(--accent-gradient)', color: 'white',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: 700, fontSize: '14px', flexShrink: 0,
+    fontWeight: 700, fontSize: '16px', flexShrink: 0,
+    boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
   },
-  userName:   { fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  userRole:   { fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' },
-  signOutBtn: {
-    background: 'transparent', color: 'var(--text-muted)', fontSize: '16px',
-    padding: '4px 6px', borderRadius: '6px', flexShrink: 0,
-    border: '1px solid transparent',
-  },
-  main: { marginLeft: '230px', flex: 1, padding: '36px', background: 'var(--bg-primary)', minHeight: '100vh' },
+  userName:   { fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  userRole:   { fontSize: '11px', color: 'var(--accent)', fontWeight: 600, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.03em' },
+  main: { marginLeft: '260px', flex: 1, padding: '48px', background: 'transparent', minHeight: '100vh' },
 };

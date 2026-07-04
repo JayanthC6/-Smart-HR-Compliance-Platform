@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
+import { 
+  UserPlus, 
+  UploadCloud, 
+  FileText, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Calendar, 
+  Loader2 
+} from 'lucide-react';
 
 type Toast = { msg: string; type: 'success' | 'error' } | null;
 
@@ -76,8 +85,9 @@ export default function OnboardingPage() {
   return (
     <div>
       {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          {toast.type === 'success' ? '✅' : '⚠️'} {toast.msg}
+        <div className={`toast toast-${toast.type}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />} 
+          <span>{toast.msg}</span>
         </div>
       )}
 
@@ -87,7 +97,7 @@ export default function OnboardingPage() {
       <div style={styles.grid}>
         {/* Left column — create task */}
         <div>
-          <div className="card" style={{ marginBottom: '16px' }}>
+          <div className="card glass-panel" style={{ marginBottom: '24px' }}>
             <h2 style={styles.sectionTitle}>Assign New Task</h2>
             <form onSubmit={createTask} style={styles.form}>
               <div style={styles.field}>
@@ -128,44 +138,58 @@ export default function OnboardingPage() {
                 type="submit"
                 className="btn-primary"
                 disabled={loading}
-                style={{ alignSelf: 'flex-start', minWidth: '140px' }}
+                style={{ alignSelf: 'flex-start', minWidth: '140px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
               >
-                {loading
-                  ? <><span className="spinner" style={{ marginRight: 8 }} />Assigning...</>
-                  : '+ Assign Task'}
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    <span>Assigning...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={16} />
+                    <span>Assign Task</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
 
           {/* Document upload */}
-          <div className="card">
+          <div className="card glass-panel">
             <h2 style={styles.sectionTitle}>Upload Document</h2>
             <p style={styles.hint2}>Upload onboarding documents (PDF, images, etc.)</p>
-            <label style={styles.uploadArea}>
+            <label className="upload-dropzone" style={{ margin: '12px 0' }}>
               <input
                 type="file"
                 style={{ display: 'none' }}
                 onChange={handleFileUpload}
                 disabled={uploading}
               />
-              {uploading
-                ? <><span className="spinner" style={{ marginRight: 8 }} />Uploading...</>
-                : '📁 Click to choose a file'}
+              <UploadCloud size={32} style={{ color: 'var(--accent)', marginBottom: '8px' }} />
+              {uploading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Loader2 size={16} className="spinner" />
+                  <span>Uploading...</span>
+                </div>
+              ) : (
+                <span><strong>Click to choose a file</strong> or drag & drop</span>
+              )}
             </label>
 
             {docs.length > 0 && (
-              <div style={{ marginTop: '16px' }}>
+              <div style={{ marginTop: '20px' }}>
                 <p style={styles.docsLabel}>Uploaded Documents ({docs.length})</p>
                 {docs.map((d: any) => (
                   <div key={d.id} style={styles.docRow}>
-                    <span style={{ fontSize: '16px' }}>📄</span>
-                    <div style={{ flex: 1 }}>
+                    <FileText size={18} style={{ color: 'var(--text-secondary)' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={styles.docName}>{d.originalName || d.fileName || 'Document'}</p>
                       {d.createdAt && (
                         <p style={styles.docDate}>{new Date(d.createdAt).toLocaleDateString()}</p>
                       )}
                     </div>
-                    <span className="badge badge-success">Uploaded</span>
+                    <span className="badge badge-success" style={{ padding: '3px 8px', borderRadius: '6px' }}>Uploaded</span>
                   </div>
                 ))}
               </div>
@@ -176,14 +200,14 @@ export default function OnboardingPage() {
         {/* Right column — tasks list */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={styles.sectionTitle}>My Tasks ({tasks.length})</h2>
+            <h2 style={styles.sectionTitle}>Assigned Tasks ({tasks.length})</h2>
             {tasks.length > 0 && (
               <span style={styles.pctBadge}>{pct}% done</span>
             )}
           </div>
 
           {tasks.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '24px' }}>
               <div className="progress-track">
                 <div className="progress-fill" style={{ width: `${pct}%` }} />
               </div>
@@ -200,7 +224,10 @@ export default function OnboardingPage() {
               <div style={{ flex: 1 }}>
                 <p style={styles.taskTitle}>{t.title}</p>
                 {t.dueDate && (
-                  <p style={styles.taskDue}>📅 Due: {t.dueDate}</p>
+                  <p style={styles.taskDue}>
+                    <Calendar size={12} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
+                    Due: {t.dueDate}
+                  </p>
                 )}
               </div>
               <span className={`badge ${STATUS_COLOR[t.status] || 'badge-info'}`}>
@@ -215,8 +242,8 @@ export default function OnboardingPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  heading:      { fontSize: '26px', fontWeight: 700, marginBottom: '4px' },
-  sub:          { color: 'var(--text-secondary)', marginBottom: '24px' },
+  heading:      { fontSize: '26px', fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.02em' },
+  sub:          { color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' },
   sectionTitle: { fontSize: '15px', fontWeight: 600, marginBottom: '16px' },
   grid:         { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   form:         { display: 'flex', flexDirection: 'column', gap: '16px' },
@@ -226,19 +253,13 @@ const styles: Record<string, React.CSSProperties> = {
   optional:     { color: 'var(--text-muted)', fontWeight: 400 },
   hint:         { color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' },
   hint2:        { color: 'var(--text-muted)', fontSize: '13px', marginBottom: '12px' },
-  uploadArea: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: '2px dashed var(--border)', borderRadius: '8px',
-    padding: '20px', cursor: 'pointer', color: 'var(--text-secondary)',
-    fontSize: '14px', transition: 'border-color 0.2s',
-  },
-  docsLabel:    { fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' },
-  docRow:       { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid var(--border)' },
-  docName:      { fontSize: '13px', fontWeight: 500 },
+  docsLabel:    { fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  docRow:       { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', borderBottom: '1px solid var(--border)' },
+  docName:      { fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   docDate:      { fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' },
   pctBadge:     { background: 'var(--accent-light)', color: 'var(--accent)', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 },
   progressLabel:{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' },
   taskRow:      { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--border)' },
   taskTitle:    { fontWeight: 500, marginBottom: '4px', fontSize: '14px' },
-  taskDue:      { color: 'var(--text-muted)', fontSize: '12px' },
+  taskDue:      { color: 'var(--text-muted)', fontSize: '12px', display: 'flex', alignItems: 'center' },
 };

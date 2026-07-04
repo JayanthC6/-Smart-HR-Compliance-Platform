@@ -25,8 +25,8 @@ export default function OnboardingPage() {
   };
 
   useEffect(() => {
-    api.get('/api/onboarding/tasks/my').then(r => setTasks(r.data)).catch(() => {});
-    api.get('/api/onboarding/documents/my').then(r => setDocs(r.data)).catch(() => {});
+    api.get('/api/onboarding/tasks/company').then(r => setTasks(r.data)).catch(() => {});
+    api.get('/api/onboarding/documents/company').then(r => setDocs(r.data)).catch(() => {});
     api.get('/api/users').then(r => {
       const emps = r.data.filter((u: any) => u.role === 'EMPLOYEE');
       setEmployees(emps);

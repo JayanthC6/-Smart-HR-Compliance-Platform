@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface DocumentRepository extends JpaRepository<Document, UUID> {
     List<Document> findByUserId(UUID userId);
+    List<Document> findByCompanyId(UUID companyId);
 }

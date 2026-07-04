@@ -1,121 +1,64 @@
-# Smart HR Compliance Platform
+# Smart HR Compliance System
 
-A multi-tenant SaaS platform for HR compliance management, built to demonstrate
-production-grade backend architecture: real tenant isolation, JWT-based RBAC,
-and an AI-powered policy assistant using Retrieval-Augmented Generation (RAG).
+A modern, full-stack HR Compliance and Onboarding platform built with React, Spring Boot, PostgreSQL, and AI. This platform helps companies manage employee onboarding, document verification, policy distribution, and compliance auditing in a centralized and secure way.
 
-## What this project is
+## Features
 
-Companies often struggle to track whether employees have actually read and
-accepted HR policies, and to onboard new hires consistently. This platform
-gives each company (tenant) its own isolated workspace to manage:
+- **Role-Based Access Control:** Separate dashboards for Admins/HR and Employees.
+- **Onboarding Workflows:** Assign tasks, track progress, and collect legally required documents (like I-9 verification).
+- **Policy Management:** Create and distribute company policies (Remote Work, PTO, Anti-Harassment) with strict versioning.
+- **AI Policy Assistant:** Integrated RAG (Retrieval-Augmented Generation) using Groq AI and HuggingFace embeddings. Employees can ask an AI chatbot questions about company policies and get instant, accurate answers directly sourced from official documents.
+- **Immutable Audit Log:** Automatically tracks every compliance action (creating policies, completing tasks, acknowledging documents) for legal and SOC2/ISO compliance auditing.
 
-- **Policy documents** - create, version, and publish HR policies
-- **Consent tracking** - record and prove which employee accepted which policy, and when (audit-ready)
-- **Onboarding checklists** - task-based onboarding flow for new hires, with document uploads
-- **AI policy assistant** - employees can ask natural-language questions about company policy and get answers grounded in the actual policy documents (RAG), instead of digging through PDFs
-- **Audit trail** - every significant action is logged for compliance reporting
+## Tech Stack
 
-## Why multi-tenant
+- **Frontend:** React, TypeScript, Vite, Vanilla CSS
+- **Backend:** Spring Boot (Java 17), Spring Security (JWT), Spring Data JPA, Flyway
+- **Database:** PostgreSQL (Relational Data), Redis (AI Caching)
+- **AI Integration:** Groq API (LLM generation), HuggingFace Inference API (Text Embeddings)
+- **Deployment:** Docker & Docker Compose
 
-This is a single shared-database, shared-schema multi-tenant system — every
-table that belongs to a tenant carries a `company_id` column. Rather than
-manually appending `WHERE company_id = ?` to every query (easy to forget,
-easy to get wrong), tenant isolation is enforced once and automatically via
-Hibernate filters tied to the authenticated user's JWT — the architecturally
-interesting part of this project, and the part most worth discussing in an
-interview, since it directly addresses the most common real-world bug class
-in multi-tenant systems: cross-tenant data leakage.
+## Prerequisites
 
-## Tech stack
+- Docker and Docker Compose installed
+- A [Groq API Key](https://console.groq.com/keys)
+- A [HuggingFace Access Token](https://huggingface.co/settings/tokens)
 
-| Layer | Technology |
-|---|---|
-| Backend | Java 17, Spring Boot 3.5, Spring Security, Spring Data JPA (Hibernate) |
-| Database | PostgreSQL 18, Flyway (versioned migrations) |
-| Auth | JWT (jjwt), BCrypt password hashing |
-| Caching | Redis (planned — JWT blacklist, response caching) |
-| AI / RAG | Groq (LLM inference) + HuggingFace Inference API (embeddings), cosine similarity search |
-| API docs | springdoc-openapi / Swagger UI |
-| Frontend | React + TypeScript (not yet started) |
-| Containerization | Docker Compose (planned, deferred until core app is feature-complete) |
+## Local Setup
 
-## Architecture decisions worth highlighting
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repo-url>
+   cd smart-hr-compliance
+   ```
 
-- **UUID primary keys**, not auto-increment integers — prevents sequential ID
-  enumeration across tenants, a real concern in multi-tenant systems where a
-  predictable ID scheme can let one company guess at another's record IDs.
-- **Flyway over `ddl-auto: update`** - schema is version-controlled via
-  explicit migration files (`V1`, `V2`, `V3`...), and Hibernate is set to
-  `validate` only, so the database schema can never silently drift from what
-  the entity classes expect.
-- **Provider-agnostic embedding layer** - the RAG pipeline calls embeddings
-  through a clean `EmbeddingService` interface, so the underlying provider
-  (currently HuggingFace's free Inference API) can be swapped for a local
-  model later without touching calling code.
-- **Cosine similarity computed in application code**, not via a vector
-  database extension like pgvector — a deliberate scope decision to avoid a
-  native Postgres extension install blocking progress, with room to upgrade
-  later once the core pipeline works end-to-end.
+2. **Configure Environment Variables:**
+   Create a `.env` file in the root directory and add your security keys:
+   ```env
+   DB_USER=postgres
+   DB_PASSWORD=root123
+   DB_NAME=hrcompliance
+   JWT_SECRET=your-super-secret-jwt-key-make-it-long
+   JWT_EXPIRATION_MS=86400000
+   HF_TOKEN=hf_your_huggingface_token
+   GROQ_API_KEY=gsk_your_groq_api_key
+   ```
 
-## Current status (as of this commit)
+3. **Run with Docker:**
+   Start the entire application stack (Frontend, Backend, PostgreSQL, and Redis) with a single command:
+   ```bash
+   docker-compose up --build
+   ```
 
-**Working:**
-- Project scaffolded (Spring Boot 3.5, Java 17, Maven, feature-package structure)
-- PostgreSQL database created and connected
-- Full schema in place via Flyway migrations (`V1`–`V3`): companies, users,
-  policies, policy_chunks, consents, onboarding_tasks, documents, audit_logs
-- All JPA entities mapped and validated against the live schema (Hibernate
-  `ddl-auto: validate` passes cleanly)
-- JWT infrastructure built: token generation/validation, auth filter, security
-  config, BCrypt password encoding
-- `/api/auth/register` and `/api/auth/login` endpoints implemented
-- Application boots successfully and connects to Postgres (port 8081)
+4. **Access the Application:**
+   - **Frontend UI:** `http://localhost:3000`
+   - **Backend API:** `http://localhost:8081`
 
-**In progress:**
-- Debugging a `403 Forbidden` on `POST /api/auth/register` — endpoint is
-  correctly marked `permitAll()` in `SecurityConfig`, but something in the
-  Spring Security filter chain is still rejecting the request before it
-  reaches the controller. Root cause not yet confirmed.
+## Demo Walkthrough
 
-**Not started yet:**
-- Hibernate tenant filter (the core multi-tenancy enforcement mechanism)
-- Compliance module business logic (policy CRUD, consent recording)
-- Onboarding module business logic
-- RAG/AI module (embedding pipeline, Groq integration, similarity search)
-- Redis caching layer
-- React + TypeScript frontend
-- Unit/integration tests
-- Docker Compose setup
-
-## Local setup
-
-Requires Java 17, Maven, and PostgreSQL running locally.
-
-```bash
-# create the database
-psql -U postgres -c "CREATE DATABASE hr_compliance;"
-
-# set required environment variables
-$env:DB_USERNAME="postgres"
-$env:DB_PASSWORD="<your_postgres_password>"
-$env:JWT_SECRET="<a_random_string_at_least_32_characters_long>"
-$env:JWT_EXPIRATION_MS="86400000"
-
-# run
-.\mvnw.cmd spring-boot:run
-```
-
-The app starts on `http://localhost:8081`. Swagger UI is available at
-`/swagger-ui.html` once the app is running.
-
-## Roadmap
-
-1. Fix the 403 on auth endpoints
-2. Implement Hibernate tenant filter for automatic `company_id` scoping
-3. Build out Compliance and Onboarding module business logic
-4. Build the RAG pipeline (embedding service + Groq-backed Q&A endpoint)
-5. Add Redis caching
-6. Build the React frontend
-7. Add test coverage (JUnit 5 + Mockito)
-8. Dockerize the full stack
+1. Go to `http://localhost:3000` and click "Register here".
+2. Create your company's Admin account.
+3. On the **Policies** tab, create a new policy and click **🤖 Embed for AI** to inject it into the AI Vector database.
+4. On the **Onboarding** tab, assign tasks to your employees.
+5. Check the **Audit Log** to see immutable compliance records of your actions.
+6. Log in as an Employee to complete tasks, upload documents, and ask the AI Policy Assistant questions!

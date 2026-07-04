@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface OnboardingTaskRepository extends JpaRepository<OnboardingTask, UUID> {
     List<OnboardingTask> findByUserId(UUID userId);
+    List<OnboardingTask> findByCompanyId(UUID companyId);
 }

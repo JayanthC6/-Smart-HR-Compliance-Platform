@@ -70,6 +70,14 @@ public class OnboardingService {
                 .collect(Collectors.toList());
     }
 
+    public List<TaskResponse> getCompanyTasks() {
+        AuthenticatedUser user = getCurrentUser();
+        return taskRepository.findByCompanyId(user.getCompanyId())
+                .stream()
+                .map(this::toTaskResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public DocumentResponse uploadDocument(MultipartFile file) throws IOException {
         AuthenticatedUser user = getCurrentUser();
@@ -105,6 +113,19 @@ public class OnboardingService {
     public List<DocumentResponse> getMyDocuments() {
         AuthenticatedUser user = getCurrentUser();
         return documentRepository.findByUserId(user.getUserId())
+                .stream()
+                .map(d -> new DocumentResponse(
+                        d.getId(),
+                        d.getUserId(),
+                        d.getFileName(),
+                        d.getUploadedAt()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<DocumentResponse> getCompanyDocuments() {
+        AuthenticatedUser user = getCurrentUser();
+        return documentRepository.findByCompanyId(user.getCompanyId())
                 .stream()
                 .map(d -> new DocumentResponse(
                         d.getId(),

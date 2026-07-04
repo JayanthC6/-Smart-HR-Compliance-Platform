@@ -42,6 +42,12 @@ public class OnboardingController {
         return ResponseEntity.ok(onboardingService.getMyTasks());
     }
 
+    @GetMapping("/tasks/company")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    public ResponseEntity<List<TaskResponse>> getCompanyTasks() {
+        return ResponseEntity.ok(onboardingService.getCompanyTasks());
+    }
+
     @PostMapping("/documents")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
     public ResponseEntity<DocumentResponse> uploadDocument(
@@ -53,5 +59,11 @@ public class OnboardingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
     public ResponseEntity<List<DocumentResponse>> getMyDocuments() {
         return ResponseEntity.ok(onboardingService.getMyDocuments());
+    }
+
+    @GetMapping("/documents/company")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    public ResponseEntity<List<DocumentResponse>> getCompanyDocuments() {
+        return ResponseEntity.ok(onboardingService.getCompanyDocuments());
     }
 }

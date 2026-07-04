@@ -9,6 +9,7 @@ export default function Register() {
   const [form, setForm] = useState({
     companyName: '', adminFullName: '', email: '', password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -53,9 +54,34 @@ export default function Register() {
               onChange={e => setForm({ ...form, email: e.target.value })} required />
           </div>
           <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input type="password" placeholder="Min 8 characters" value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })} required />
+            <div className="form-group" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={styles.label}>Password</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                placeholder="Min 8 characters"
+                required
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '32px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  padding: '0'
+                }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
           {error && <p className="error-msg">{error}</p>}
           <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px' }} disabled={loading}>

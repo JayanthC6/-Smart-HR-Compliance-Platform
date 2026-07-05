@@ -158,6 +158,44 @@ export default function Login() {
           </button>
         </form>
 
+        <div style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+          <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Or Quick Demo Login
+          </p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ flex: 1, fontSize: '11px', padding: '8px 4px' }}
+              onClick={() => {
+                setLoginType('admin');
+                setForm({
+                  companyName: 'DemoCorp',
+                  email: 'admin@democorp.com',
+                  password: 'password123'
+                });
+              }}
+            >
+              Demo Admin/HR
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ flex: 1, fontSize: '11px', padding: '8px 4px' }}
+              onClick={() => {
+                setLoginType('employee');
+                setForm({
+                  companyName: 'DemoCorp',
+                  email: 'employee@democorp.com',
+                  password: 'password123'
+                });
+              }}
+            >
+              Demo Employee
+            </button>
+          </div>
+        </div>
+
         <p style={styles.footer}>
           New company?{' '}
           <Link to="/register" style={{ color: 'var(--accent)' }}>Register here</Link>

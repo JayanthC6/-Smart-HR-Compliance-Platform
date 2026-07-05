@@ -20,33 +20,49 @@ public class CreateSampleRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        List<Company> companies = companyRepository.findAll();
-        if (companies.isEmpty()) {
-            log.info("No companies found in database to bind a sample employee.");
-            return;
+        // 1. Ensure DemoCorp company exists
+        Company demoCompany = companyRepository.findAll().stream()
+                .filter(c -> c.getName().equalsIgnoreCase("DemoCorp"))
+                .findFirst()
+                .orElseGet(() -> {
+                    Company c = new Company();
+                    c.setName("DemoCorp");
+                    c.setCreatedAt(LocalDateTime.now());
+                    return companyRepository.save(c);
+                });
+
+        // 2. Ensure admin@democorp.com exists
+        boolean adminExists = userRepository.findAll().stream()
+                .anyMatch(u -> u.getEmail().equalsIgnoreCase("admin@democorp.com"));
+        if (!adminExists) {
+            User admin = new User();
+            admin.setCompanyId(demoCompany.getId());
+            admin.setEmail("admin@democorp.com");
+            admin.setPasswordHash(passwordEncoder.encode("password123"));
+            admin.setFullName("Demo Admin");
+            admin.setRole(Role.ADMIN);
+            admin.setCreatedAt(LocalDateTime.now());
+            userRepository.save(admin);
         }
 
-        Company company = companies.get(0);
-        String email = "employee@test.com";
+        // 3. Ensure employee@democorp.com exists
+        boolean employeeExists = userRepository.findAll().stream()
+                .anyMatch(u -> u.getEmail().equalsIgnoreCase("employee@democorp.com"));
+        if (!employeeExists) {
+            User employee = new User();
+            employee.setCompanyId(demoCompany.getId());
+            employee.setEmail("employee@democorp.com");
+            employee.setPasswordHash(passwordEncoder.encode("password123"));
+            employee.setFullName("Demo Employee");
+            employee.setRole(Role.EMPLOYEE);
+            employee.setCreatedAt(LocalDateTime.now());
+            userRepository.save(employee);
 
-        // Check if sample employee already exists
-        boolean exists = userRepository.findAll().stream()
-                .anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
-
-        if (!exists) {
-            User emp = new User();
-            emp.setCompanyId(company.getId());
-            emp.setEmail(email);
-            emp.setPasswordHash(passwordEncoder.encode("password123"));
-            emp.setFullName("John Doe (Employee)");
-            emp.setRole(Role.EMPLOYEE);
-            emp.setCreatedAt(LocalDateTime.now());
-            userRepository.save(emp);
-            
             System.out.println("=================================================");
-            System.out.println(">>>>>> CREATED SAMPLE EMPLOYEE FOR TESTING <<<<<<");
-            System.out.println("Company Name: " + company.getName());
-            System.out.println("Email:        " + email);
+            System.out.println(">>>>>> SEEDED DEMOCORP & DEMO ACCOUNTS <<<<<<");
+            System.out.println("Company Name: DemoCorp");
+            System.out.println("Admin Email:  admin@democorp.com");
+            System.out.println("Emp Email:    employee@democorp.com");
             System.out.println("Password:     password123");
             System.out.println("=================================================");
         }

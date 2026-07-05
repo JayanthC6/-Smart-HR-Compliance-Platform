@@ -1,28 +1,38 @@
 # Smart HR Compliance System
 
-A modern, full-stack HR Compliance and Onboarding platform built with React, Spring Boot, PostgreSQL, and AI. This platform helps companies manage employee onboarding, document verification, policy distribution, and compliance auditing in a centralized and secure way.
+A modern, full-stack HR Compliance and Onboarding multi-tenant SaaS platform built with React, Spring Boot, PostgreSQL, Redis, and AI. This platform helps companies manage employee onboarding, document verification, policy distribution, and compliance auditing in a centralized and secure way.
 
-## Features
+---
 
-- **Role-Based Access Control:** Separate dashboards for Admins/HR and Employees.
-- **Onboarding Workflows:** Assign tasks, track progress, and collect legally required documents (like I-9 verification).
+## Key Features
+
+- **Multi-Tenant Architecture:** Shared database design where every tenant-scoped table is discriminated by a `company_id` column, automatically filtered via Hibernate filter annotations.
+- **Invite-Based Self-Registration:** HR and Admins can generate secure invite links (48-hour TTL) allowing new employees to self-register into their company's workspace.
 - **Policy Management:** Create and distribute company policies (Remote Work, PTO, Anti-Harassment) with strict versioning.
-- **AI Policy Assistant:** Integrated RAG (Retrieval-Augmented Generation) using Groq AI and HuggingFace embeddings. Employees can ask an AI chatbot questions about company policies and get instant, accurate answers directly sourced from official documents.
-- **Immutable Audit Log:** Automatically tracks every compliance action (creating policies, completing tasks, acknowledging documents) for legal and SOC2/ISO compliance auditing.
+- **AI Policy Assistant (RAG Chat):** Integrated chatbot using Groq AI and HuggingFace embeddings. Employees can query the chatbot for instant answers sourced from vector-embedded policies.
+- **AI Policy Summarizer:** Instantly generate a 3-bullet, 20-word summary of complex company policies, cached in Redis for 60 minutes.
+- **AI Compliance Report Generator:** Automatically summarize the company's chronological audit trail to assess compliance status and risks, cached in Redis for 30 minutes and downloadable as a `.txt` file.
+- **Immutable Audit Log:** Automatically records all compliance actions (policy creation, acceptance, document uploads) for SOC2/ISO audit trails.
+
+---
 
 ## Tech Stack
 
-- **Frontend:** React, TypeScript, Vite, Vanilla CSS
-- **Backend:** Spring Boot (Java 17), Spring Security (JWT), Spring Data JPA, Flyway
-- **Database:** PostgreSQL (Relational Data), Redis (AI Caching)
-- **AI Integration:** Groq API (LLM generation), HuggingFace Inference API (Text Embeddings)
+- **Frontend:** React (Vite), TypeScript, Lucide Icons, Vanilla CSS
+- **Backend:** Spring Boot 3.5, Spring Security (JWT), Spring Data JPA, Hibernate, Flyway
+- **Database & Cache:** PostgreSQL (Relational Data), Redis (AI and Report Caching)
+- **AI Services:** Groq API (LLaMA-3.3-70b-versatile), HuggingFace Inference API (Embeddings)
 - **Deployment:** Docker & Docker Compose
+
+---
 
 ## Prerequisites
 
 - Docker and Docker Compose installed
 - A [Groq API Key](https://console.groq.com/keys)
 - A [HuggingFace Access Token](https://huggingface.co/settings/tokens)
+
+---
 
 ## Local Setup
 
@@ -33,7 +43,7 @@ A modern, full-stack HR Compliance and Onboarding platform built with React, Spr
    ```
 
 2. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add your security keys:
+   Create a `.env` file in the root directory:
    ```env
    DB_USER=postgres
    DB_PASSWORD=root123
@@ -44,21 +54,22 @@ A modern, full-stack HR Compliance and Onboarding platform built with React, Spr
    GROQ_API_KEY=gsk_your_groq_api_key
    ```
 
-3. **Run with Docker:**
-   Start the entire application stack (Frontend, Backend, PostgreSQL, and Redis) with a single command:
+3. **Build & Run with Docker:**
    ```bash
    docker-compose up --build
    ```
 
-4. **Access the Application:**
+4. **Access Ports:**
    - **Frontend UI:** `http://localhost:3000`
    - **Backend API:** `http://localhost:8081`
 
+---
+
 ## Demo Walkthrough
 
-1. Go to `http://localhost:3000` and click "Register here".
-2. Create your company's Admin account.
-3. On the **Policies** tab, create a new policy and click **🤖 Embed for AI** to inject it into the AI Vector database.
-4. On the **Onboarding** tab, assign tasks to your employees.
-5. Check the **Audit Log** to see immutable compliance records of your actions.
-6. Log in as an Employee to complete tasks, upload documents, and ask the AI Policy Assistant questions!
+1. Navigate to `http://localhost:3000` and register a new company workspace.
+2. Under the **Onboarding** tab, enter an employee's email to generate a secure invite link, then copy it.
+3. Open the invite link in an incognito window to complete self-registration.
+4. Log back in as Admin, create a policy in the **Policies** tab, and click **Embed for AI** to register it for the chatbot.
+5. Try clicking **Summarize** on any policy to view a 3-bullet summary instantly.
+6. Open the **Audit Log** tab and click **Generate AI Report** to get a compliance health check. Click **Download as TXT** to export the results.

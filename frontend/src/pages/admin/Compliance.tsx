@@ -177,7 +177,7 @@ export default function CompliancePage() {
                     overflowY: 'auto',
                     maxHeight: '220px'
                   }}>
-                    {riskData.aiAnalysis}
+                    {riskData.aiAnalysis?.replaceAll('**', '')}
                   </div>
                 </div>
               </div>

@@ -221,7 +221,8 @@ public class ComplianceController {
         String systemPrompt = "You are a compliance risk analyst. Given the following policy acceptance " +
                 "data for a company, provide: 1) An overall risk level (LOW/MEDIUM/HIGH), " +
                 "2) A risk score out of 100, 3) Top 3 specific risks or gaps identified, " +
-                "4) Top 3 recommendations to improve compliance. Be concise and direct.";
+                "4) Top 3 recommendations to improve compliance. Be concise and direct. " +
+                "Do not use markdown formatting (like ** for bolding) in your response.";
 
         String aiAnalysis = groqService.chat(systemPrompt, dataBuilder.toString());
 

@@ -1,8 +1,6 @@
 package com.hrcompliance.platform.auth;
 
-import com.hrcompliance.platform.auth.dto.AuthResponse;
-import com.hrcompliance.platform.auth.dto.LoginRequest;
-import com.hrcompliance.platform.auth.dto.RegisterCompanyRequest;
+import com.hrcompliance.platform.auth.dto.*;
 import com.hrcompliance.platform.security.JwtUtil;
 import com.hrcompliance.platform.security.TokenBlacklistService;
 import jakarta.validation.Valid;
@@ -19,6 +17,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final InviteService inviteService;
     private final JwtUtil jwtUtil;
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -47,4 +46,17 @@ public class AuthController {
         }
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
-}
+
+    @PostMapping("/invite")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public ResponseEntity<InviteResponse> invite(
+            @Valid @RequestBody InviteRequest request) {
+        return ResponseEntity.ok(inviteService.createInvite(request));
+    }
+
+    @PostMapping("/register-employee")
+    public ResponseEntity<AuthResponse> registerEmployee(
+            @Valid @RequestBody RegisterEmployeeRequest request) {
+        return ResponseEntity.ok(inviteService.registerEmployee(request));
+    }
+}

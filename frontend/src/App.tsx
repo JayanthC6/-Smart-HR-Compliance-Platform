@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import RegisterEmployee from './pages/auth/RegisterEmployee';
 import Layout from './components/Layout';
 import AdminDashboard from './pages/admin/Dashboard';
 import PoliciesPage from './pages/admin/Policies';
@@ -23,6 +24,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/register-employee" element={<RegisterEmployee />} />
       <Route path="/admin" element={<PrivateRoute><Layout><AdminDashboard /></Layout></PrivateRoute>} />
       <Route path="/admin/policies" element={<PrivateRoute><Layout><PoliciesPage /></Layout></PrivateRoute>} />
       <Route path="/admin/onboarding" element={<PrivateRoute><Layout><OnboardingPage /></Layout></PrivateRoute>} />

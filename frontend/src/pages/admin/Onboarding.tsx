@@ -28,6 +28,13 @@ export default function OnboardingPage() {
   const [toast, setToast]     = useState<Toast>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Invite states
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole]   = useState('EMPLOYEE');
+  const [inviteLink, setInviteLink]   = useState('');
+  const [inviting, setInviting]       = useState(false);
+  const [inviteError, setInviteError] = useState('');
+
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
@@ -56,6 +63,24 @@ export default function OnboardingPage() {
       setFormError(err.response?.data?.message || 'Failed to assign task');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviting(true);
+    setInviteError('');
+    setInviteLink('');
+    try {
+      const res = await api.post('/api/auth/invite', { email: inviteEmail, role: inviteRole });
+      const link = `${window.location.origin}/register-employee?token=${res.data.token}`;
+      setInviteLink(link);
+      setInviteEmail('');
+      showToast('Invite generated successfully!', 'success');
+    } catch (err: any) {
+      setInviteError(err.response?.data?.message || 'Failed to generate invite');
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -95,7 +120,7 @@ export default function OnboardingPage() {
       <p style={styles.sub}>Assign tasks and manage documents for new employees</p>
 
       <div style={styles.grid}>
-        {/* Left column — create task */}
+        {/* Left column — create task & invites */}
         <div>
           <div className="card glass-panel" style={{ marginBottom: '24px' }}>
             <h2 style={styles.sectionTitle}>Assign New Task</h2>
@@ -153,6 +178,79 @@ export default function OnboardingPage() {
                 )}
               </button>
             </form>
+          </div>
+
+          {/* Invite Employee Card */}
+          <div className="card glass-panel" style={{ marginBottom: '24px' }}>
+            <h2 style={styles.sectionTitle}>Invite Employee</h2>
+            <form onSubmit={handleInvite} style={styles.form}>
+              <div style={styles.field}>
+                <label style={styles.label}>Email Address</label>
+                <input
+                  type="email"
+                  placeholder="employee@company.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.label}>Select Role</label>
+                <select
+                  style={styles.select}
+                  value={inviteRole}
+                  onChange={e => setInviteRole(e.target.value)}
+                  required
+                >
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="HR">HR Manager</option>
+                </select>
+              </div>
+              {inviteError && <p className="error-msg">{inviteError}</p>}
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={inviting}
+                style={{ alignSelf: 'flex-start', minWidth: '140px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              >
+                {inviting ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    <span>Inviting...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={16} />
+                    <span>Send Invite</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {inviteLink && (
+              <div style={{ marginTop: '20px', background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>Invite Link Generated:</p>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    readOnly
+                    value={inviteLink}
+                    style={{ flex: 1, padding: '8px 12px', fontSize: '12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)' }}
+                    onClick={e => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    className="btn-secondary"
+                    style={{ padding: '8px 12px', fontSize: '12px', whiteSpace: 'nowrap' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(inviteLink);
+                      showToast('Copied to clipboard!', 'success');
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Document upload */}

@@ -6,7 +6,10 @@ import {
   FileText, 
   RefreshCw,
   Inbox,
-  Filter
+  Filter,
+  Sparkles,
+  Download,
+  Loader2
 } from 'lucide-react';
 
 interface AuditEntry {
@@ -38,6 +41,11 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState('ALL');
 
+  // AI report states
+  const [report, setReport] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [showReportCard, setShowReportCard] = useState(false);
+
   useEffect(() => {
     api.get('/api/audit/logs')
       .then(r => setLogs(r.data))
@@ -45,13 +53,100 @@ export default function AuditPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const generateReport = async () => {
+    setGenerating(true);
+    try {
+      const res = await api.post('/api/audit/report');
+      setReport(res.data.reportContent);
+      setShowReportCard(true);
+    } catch {
+      alert('Failed to generate compliance report');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadReport = () => {
+    if (!report) return;
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `compliance_report_${new Date().toISOString().split('T')[0]}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const actionTypes = ['ALL', ...Array.from(new Set(logs.map(l => l.action)))];
   const filtered = filter === 'ALL' ? logs : logs.filter(l => l.action === filter);
 
   return (
     <div>
-      <h1 style={styles.heading}>Audit Log</h1>
-      <p style={styles.sub}>Complete immutable record of all compliance actions</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={styles.heading}>Audit Log</h1>
+          <p style={{ ...styles.sub, margin: 0 }}>Complete immutable record of all compliance actions</p>
+        </div>
+        <button
+          className="btn-primary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '13px' }}
+          onClick={generateReport}
+          disabled={generating}
+        >
+          {generating ? (
+            <>
+              <Loader2 size={16} className="spinner" />
+              <span>Generating report...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles size={16} />
+              <span>Generate AI Report</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {showReportCard && report && (
+        <div className="card glass-panel" style={{ marginBottom: '24px', padding: '24px 28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--accent)' }}>
+              <Sparkles size={16} />
+              <span>Compliance Report</span>
+            </h2>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="btn-secondary"
+                style={{ fontSize: '12px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                onClick={downloadReport}
+              >
+                <Download size={14} />
+                <span>Download as TXT</span>
+              </button>
+              <button
+                className="btn-secondary"
+                style={{ fontSize: '12px', padding: '6px 12px' }}
+                onClick={() => setShowReportCard(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          <div style={{ 
+            fontFamily: 'Consolas, Monaco, monospace', 
+            fontSize: '13px', 
+            lineHeight: 1.6, 
+            whiteSpace: 'pre-wrap', 
+            background: 'var(--bg-secondary)', 
+            padding: '20px', 
+            borderRadius: '12px', 
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)'
+          }}>
+            {report}
+          </div>
+        </div>
+      )}
 
       <div style={styles.toolbar}>
         <div style={styles.filterRow}>

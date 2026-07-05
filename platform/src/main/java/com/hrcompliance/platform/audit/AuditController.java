@@ -1,5 +1,6 @@
 package com.hrcompliance.platform.audit;
 
+import com.hrcompliance.platform.audit.dto.ComplianceReportResponse;
 import com.hrcompliance.platform.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class AuditController {
 
     private final AuditLogRepository auditLogRepository;
+    private final AuditService auditService;
 
     @GetMapping("/logs")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
@@ -45,4 +47,11 @@ public class AuditController {
 
         return ResponseEntity.ok(logs);
     }
+
+    @PostMapping("/report")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    public ResponseEntity<ComplianceReportResponse> generateReport() {
+        return ResponseEntity.ok(auditService.generateReport());
+    }
 }
+

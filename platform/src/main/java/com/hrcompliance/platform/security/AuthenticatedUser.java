@@ -3,6 +3,7 @@ package com.hrcompliance.platform.security;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
@@ -12,7 +13,9 @@ import java.util.UUID;
  */
 @Getter
 @AllArgsConstructor
-public class AuthenticatedUser {
+public class AuthenticatedUser implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final UUID userId;
     private final UUID companyId;
     private final String email;

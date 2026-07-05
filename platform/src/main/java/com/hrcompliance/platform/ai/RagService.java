@@ -100,6 +100,7 @@ public class RagService {
                 based ONLY on the policy context provided below. If the answer
                 is not in the context, say "I couldn't find this in our current
                 policies. Please contact HR directly."
+                Do not use markdown formatting (like ** for bolding) in your response.
 
                 POLICY CONTEXT:
                 """ + context;

@@ -83,7 +83,7 @@ export default function AiChat() {
                     <User size={14} style={{ color: '#fff' }} />
                   </div>
                 )}
-                <p style={{ lineHeight: 1.6, fontSize: '13px', margin: 0 }}>{m.content}</p>
+                <p style={{ lineHeight: 1.6, fontSize: '13px', margin: 0 }}>{m.content?.replaceAll('**', '')}</p>
               </div>
             </div>
           ))}

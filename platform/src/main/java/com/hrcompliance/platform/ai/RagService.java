@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -60,14 +61,11 @@ public class RagService {
     }
 
     public String askQuestion(String question) {
-        AuthenticatedUser user = getCurrentUser();
+        return askQuestion(question, null);
+    }
 
-        // Check Redis cache first — same question from same company returns instantly
-        String cacheKey = RAG_CACHE_PREFIX + user.getCompanyId() + ":" + question.toLowerCase().trim();
-        String cached = redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+    public String askQuestion(String question, List<Map<String, String>> history) {
+        AuthenticatedUser user = getCurrentUser();
 
         // Embed the question
         List<Double> questionEmbedding = embeddingService.embed(question);
@@ -105,6 +103,20 @@ public class RagService {
 
                 POLICY CONTEXT:
                 """ + context;
+
+        // Skip Redis caching if history is present
+        if (history != null && !history.isEmpty()) {
+            List<Map<String, String>> fullMessages = new ArrayList<>(history);
+            fullMessages.add(Map.of("role", "user", "content", question));
+            return groqService.chatWithHistory(systemPrompt, fullMessages);
+        }
+
+        // Check Redis cache first — same question from same company returns instantly
+        String cacheKey = RAG_CACHE_PREFIX + user.getCompanyId() + ":" + question.toLowerCase().trim();
+        String cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
 
         String answer = groqService.chat(systemPrompt, question);
 

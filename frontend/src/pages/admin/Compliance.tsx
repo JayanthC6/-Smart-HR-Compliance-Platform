@@ -9,7 +9,10 @@ import {
   Clock, 
   ChevronDown, 
   ChevronUp, 
-  PartyPopper 
+  PartyPopper,
+  Sparkles,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 
 interface PolicySummary {
@@ -38,6 +41,11 @@ export default function CompliancePage() {
   const [nonCompliant, setNonCompliant] = useState<any[]>([]);
   const [tab, setTab]             = useState<'summary' | 'nonCompliant'>('summary');
 
+  // Risk Score states
+  const [riskData, setRiskData] = useState<any>(null);
+  const [riskLoading, setRiskLoading] = useState(false);
+  const [showRiskReport, setShowRiskReport] = useState(false);
+
   useEffect(() => {
     Promise.all([
       api.get('/api/compliance/summary'),
@@ -48,6 +56,23 @@ export default function CompliancePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const fetchRiskScore = async (forceRefresh = false) => {
+    if (riskData && !forceRefresh) {
+      setShowRiskReport(prev => !prev);
+      return;
+    }
+    setRiskLoading(true);
+    setShowRiskReport(true);
+    try {
+      const res = await api.get(`/api/compliance/risk-score?refresh=${forceRefresh}`);
+      setRiskData(res.data);
+    } catch {
+      alert('Failed to generate compliance risk score');
+    } finally {
+      setRiskLoading(false);
+    }
+  };
+
   const toggle = (id: string) => setExpanded(prev => prev === id ? null : id);
 
   const pctColor = (pct: number) =>
@@ -55,8 +80,142 @@ export default function CompliancePage() {
 
   return (
     <div>
-      <h1 style={styles.heading}>Compliance Monitor</h1>
-      <p style={styles.sub}>Track policy acceptance across your organisation</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={styles.heading}>Compliance Monitor</h1>
+          <p style={{ ...styles.sub, margin: 0 }}>Track policy acceptance across your organisation</p>
+        </div>
+        <button
+          className="btn-primary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '13px' }}
+          onClick={() => fetchRiskScore(false)}
+          disabled={riskLoading}
+        >
+          {riskLoading ? (
+            <>
+              <Loader2 size={16} className="spinner" />
+              <span>Analyzing Risk...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles size={16} />
+              <span>{showRiskReport ? 'Hide Risk Score' : 'Generate Risk Score'}</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {showRiskReport && (
+        <div className="card glass-panel" style={{ marginBottom: '32px', padding: '28px' }}>
+          {riskLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <span className="spinner" />
+              <p style={{ marginTop: '12px', color: 'var(--text-secondary)', fontSize: '14px' }}>Performing AI risk analysis...</p>
+            </div>
+          ) : riskData ? (
+            <div>
+              {/* Header inside card */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={18} style={{ color: 'var(--accent)' }} />
+                  <span style={{ fontSize: '16px', fontWeight: 700 }}>Compliance Risk Analysis</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Generated: {new Date(riskData.generatedAt).toLocaleString()}
+                  </span>
+                  <button
+                    className="btn-secondary"
+                    style={{ fontSize: '12px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    onClick={() => fetchRiskScore(true)}
+                  >
+                    <RefreshCw size={12} />
+                    <span>Refresh Analysis</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid block */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', marginBottom: '24px' }}>
+                {/* Left: score bubble */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                  <div style={{ 
+                    width: '120px', 
+                    height: '120px', 
+                    borderRadius: '50%', 
+                    border: `8px solid ${riskData.riskLevel === 'LOW' ? 'var(--success)' : riskData.riskLevel === 'MEDIUM' ? 'var(--warning)' : 'var(--danger)'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                  }}>
+                    <span style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)' }}>{Math.round(riskData.riskScore)}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Score</span>
+                  </div>
+                  <span className={`badge ${riskData.riskLevel === 'LOW' ? 'badge-success' : riskData.riskLevel === 'MEDIUM' ? 'badge-warning' : 'badge-danger'}`} style={{ fontSize: '13px', padding: '6px 14px', fontWeight: 600 }}>
+                    {riskData.riskLevel} RISK LEVEL
+                  </span>
+                </div>
+
+                {/* Right: AI Analysis suggestions */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 10px 0', color: 'var(--text-primary)' }}>AI Analyst Recommendations:</h3>
+                  <div style={{ 
+                    flex: 1,
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontSize: '13px',
+                    lineHeight: 1.6,
+                    whiteSpace: 'pre-wrap',
+                    background: 'var(--bg-secondary)',
+                    padding: '20px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border)',
+                    borderLeft: `5px solid ${riskData.riskLevel === 'LOW' ? 'var(--success)' : riskData.riskLevel === 'MEDIUM' ? 'var(--warning)' : 'var(--danger)'}`,
+                    color: 'var(--text-secondary)',
+                    overflowY: 'auto',
+                    maxHeight: '220px'
+                  }}>
+                    {riskData.aiAnalysis}
+                  </div>
+                </div>
+              </div>
+
+              {/* Table breakdown */}
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text-primary)' }}>Policy Acceptance Rates:</h3>
+                <div style={{ border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--bg-card)' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
+                        <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>POLICY NAME</th>
+                        <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>ACCEPTANCE RATE</th>
+                        <th style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>ACCEPTED COUNT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {riskData.policyBreakdown.map((pb: any, index: number) => (
+                        <tr key={index} style={{ borderBottom: index < riskData.policyBreakdown.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>{pb.policyTitle}</td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 700, color: pctColor(pb.acceptanceRate) }}>
+                            {pb.acceptanceRate.toFixed(1)}%
+                          </td>
+                          <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            {pb.acceptedCount} / {pb.totalEmployees}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p style={{ margin: 0, color: 'var(--text-muted)', textAlign: 'center' }}>No risk data available.</p>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '48px' }}><span className="spinner" /></div>

@@ -1,16 +1,22 @@
 package com.hrcompliance.platform.compliance;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrcompliance.platform.auth.Role;
 import com.hrcompliance.platform.auth.User;
 import com.hrcompliance.platform.auth.UserRepository;
+import com.hrcompliance.platform.compliance.dto.ComplianceRiskResponse;
+import com.hrcompliance.platform.ai.GroqService;
 import com.hrcompliance.platform.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +39,9 @@ public class ComplianceController {
     private final PolicyRepository     policyRepository;
     private final ConsentRepository    consentRepository;
     private final UserRepository       userRepository;
+    private final GroqService          groqService;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper         objectMapper;
 
     @GetMapping("/summary")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
@@ -141,6 +150,93 @@ public class ComplianceController {
         }
 
         return ResponseEntity.ok(nonCompliant);
+    }
+
+    @GetMapping("/risk-score")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    public ResponseEntity<ComplianceRiskResponse> getComplianceRiskScore(
+            @RequestParam(value = "refresh", required = false, defaultValue = "false") boolean refresh) throws Exception {
+        AuthenticatedUser admin = currentUser();
+        UUID companyId = admin.getCompanyId();
+        String cacheKey = "risk-score:" + companyId;
+
+        if (!refresh) {
+            String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+            if (cachedJson != null) {
+                return ResponseEntity.ok(objectMapper.readValue(cachedJson, ComplianceRiskResponse.class));
+            }
+        }
+
+        List<Policy> policies = policyRepository.findAll();
+        List<User> employees = userRepository.findAll().stream()
+                .filter(u -> u.getCompanyId().equals(companyId) && u.getRole() == Role.EMPLOYEE)
+                .collect(Collectors.toList());
+        List<Consent> consents = consentRepository.findAll();
+
+        List<ComplianceRiskResponse.PolicyBreakdown> breakdownList = new ArrayList<>();
+        long totalConsents = 0;
+
+        for (Policy policy : policies) {
+            long acceptedCount = consents.stream()
+                    .filter(c -> c.getPolicyId().equals(policy.getId()) 
+                              && employees.stream().anyMatch(e -> e.getId().equals(c.getUserId())))
+                    .count();
+            totalConsents += acceptedCount;
+
+            double rate = employees.isEmpty() ? 100.0 : ((double) acceptedCount / employees.size()) * 100.0;
+            breakdownList.add(new ComplianceRiskResponse.PolicyBreakdown(
+                    policy.getTitle(),
+                    rate,
+                    acceptedCount,
+                    employees.size()
+            ));
+        }
+
+        int totalEmployees = employees.size();
+        long totalPossibleConsents = (long) policies.size() * totalEmployees;
+        double riskScore = 0;
+        if (totalPossibleConsents > 0) {
+            riskScore = ((double) totalConsents / totalPossibleConsents) * 100.0;
+        } else if (policies.isEmpty()) {
+            riskScore = 100.0;
+        }
+
+        String riskLevel;
+        if (riskScore >= 80) {
+            riskLevel = "LOW";
+        } else if (riskScore >= 50) {
+            riskLevel = "MEDIUM";
+        } else {
+            riskLevel = "HIGH";
+        }
+
+        StringBuilder dataBuilder = new StringBuilder();
+        dataBuilder.append("Total Employees: ").append(totalEmployees).append("\n");
+        dataBuilder.append("Policies Acceptance Rates:\n");
+        for (ComplianceRiskResponse.PolicyBreakdown pb : breakdownList) {
+            dataBuilder.append(String.format("- Policy: \"%s\", Acceptance Rate: %.1f%%, Accepted Count: %d/%d\n",
+                    pb.getPolicyTitle(), pb.getAcceptanceRate(), pb.getAcceptedCount(), pb.getTotalEmployees()));
+        }
+
+        String systemPrompt = "You are a compliance risk analyst. Given the following policy acceptance " +
+                "data for a company, provide: 1) An overall risk level (LOW/MEDIUM/HIGH), " +
+                "2) A risk score out of 100, 3) Top 3 specific risks or gaps identified, " +
+                "4) Top 3 recommendations to improve compliance. Be concise and direct.";
+
+        String aiAnalysis = groqService.chat(systemPrompt, dataBuilder.toString());
+
+        ComplianceRiskResponse response = new ComplianceRiskResponse(
+                riskScore,
+                riskLevel,
+                aiAnalysis,
+                breakdownList,
+                LocalDateTime.now()
+        );
+
+        String json = objectMapper.writeValueAsString(response);
+        redisTemplate.opsForValue().set(cacheKey, json, 30, TimeUnit.MINUTES);
+
+        return ResponseEntity.ok(response);
     }
 
     private AuthenticatedUser currentUser() {

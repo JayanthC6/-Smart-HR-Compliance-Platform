@@ -1,5 +1,6 @@
 package com.hrcompliance.platform.ai;
 
+import com.hrcompliance.platform.ai.dto.AskRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,12 +25,12 @@ public class AiController {
 
     @PostMapping("/ask")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
-    public ResponseEntity<Map<String, String>> ask(@RequestBody Map<String, String> body) {
-        String question = body.get("question");
+    public ResponseEntity<Map<String, String>> ask(@RequestBody AskRequest request) {
+        String question = request.getQuestion();
         if (question == null || question.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Question is required"));
         }
-        String answer = ragService.askQuestion(question);
+        String answer = ragService.askQuestion(question, request.getHistory());
         return ResponseEntity.ok(Map.of("answer", answer));
     }
-}
+}

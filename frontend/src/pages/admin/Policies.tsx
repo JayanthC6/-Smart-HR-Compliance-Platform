@@ -7,7 +7,8 @@ import {
   EyeOff, 
   CheckCircle2, 
   AlertTriangle, 
-  Loader2 
+  Loader2,
+  FileText
 } from 'lucide-react';
 
 type Toast = { msg: string; type: 'success' | 'error' } | null;
@@ -21,6 +22,11 @@ export default function PoliciesPage() {
   const [expanded, setExpanded]   = useState<string | null>(null);
   const [formError, setFormError] = useState('');
   const [toast, setToast]         = useState<Toast>(null);
+
+  // Summary states
+  const [summaries, setSummaries] = useState<Record<string, string>>({});
+  const [summarizing, setSummarizing] = useState<Record<string, boolean>>({});
+  const [expandedSummaries, setExpandedSummaries] = useState<Record<string, boolean>>({});
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
@@ -62,6 +68,27 @@ export default function PoliciesPage() {
       showToast('Embedding failed — please try again', 'error');
     } finally {
       setEmbedding(null);
+    }
+  };
+
+  const summarizePolicy = async (id: string) => {
+    if (expandedSummaries[id]) {
+      setExpandedSummaries(prev => ({ ...prev, [id]: false }));
+      return;
+    }
+    if (summaries[id]) {
+      setExpandedSummaries(prev => ({ ...prev, [id]: true }));
+      return;
+    }
+    setSummarizing(prev => ({ ...prev, [id]: true }));
+    try {
+      const res = await api.post(`/api/policies/${id}/summarize`);
+      setSummaries(prev => ({ ...prev, [id]: res.data.summary }));
+      setExpandedSummaries(prev => ({ ...prev, [id]: true }));
+    } catch {
+      showToast('Failed to generate policy summary', 'error');
+    } finally {
+      setSummarizing(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -158,6 +185,24 @@ export default function PoliciesPage() {
                     <button
                       className="btn-secondary"
                       style={{ fontSize: '12px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => summarizePolicy(p.id)}
+                      disabled={summarizing[p.id]}
+                    >
+                      {summarizing[p.id] ? (
+                        <>
+                          <Loader2 size={12} className="spinner" />
+                          <span>Summarizing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText size={12} style={{ color: 'var(--accent)' }} />
+                          <span>{expandedSummaries[p.id] ? 'Hide Summary' : 'Summarize'}</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      style={{ fontSize: '12px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       onClick={() => embedPolicy(p.id, p.title)}
                       disabled={embedding === p.id}
                     >
@@ -203,6 +248,16 @@ export default function PoliciesPage() {
                     {p.content?.substring(0, 120)}{p.content?.length > 120 ? '…' : ''}
                   </p>
                 )}
+
+                {/* Summary Section */}
+                {expandedSummaries[p.id] && summaries[p.id] && (
+                  <div style={styles.summaryBox}>
+                    <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent)', marginBottom: '8px' }}>Policy Summary</h4>
+                    <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>
+                      {summaries[p.id]}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -231,4 +286,16 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'var(--bg-secondary)', borderRadius: '12px',
     padding: '16px', marginTop: '4px', whiteSpace: 'pre-wrap', border: '1px solid var(--border)'
   },
+  summaryBox: {
+    marginTop: '12px',
+    padding: '12px 16px',
+    background: 'rgba(99, 102, 241, 0.04)',
+    borderLeft: '4px solid var(--accent)',
+    borderRadius: '0 12px 12px 0',
+    borderTop: '1px solid var(--border)',
+    borderRight: '1px solid var(--border)',
+    borderBottom: '1px solid var(--border)',
+    display: 'flex',
+    flexDirection: 'column'
+  }
 };

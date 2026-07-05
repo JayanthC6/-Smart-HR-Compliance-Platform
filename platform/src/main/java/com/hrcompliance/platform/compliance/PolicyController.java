@@ -2,6 +2,7 @@ package com.hrcompliance.platform.compliance;
 
 import com.hrcompliance.platform.compliance.dto.CreatePolicyRequest;
 import com.hrcompliance.platform.compliance.dto.PolicyResponse;
+import com.hrcompliance.platform.compliance.dto.SummaryResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,4 +37,10 @@ public class PolicyController {
     public ResponseEntity<PolicyResponse> getPolicy(@PathVariable UUID id) {
         return ResponseEntity.ok(policyService.getPolicyById(id));
     }
-}
+
+    @PostMapping("/{id}/summarize")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'EMPLOYEE')")
+    public ResponseEntity<SummaryResponse> summarizePolicy(@PathVariable UUID id) {
+        return ResponseEntity.ok(policyService.summarizePolicy(id));
+    }
+}

@@ -11,6 +11,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginType, setLoginType] = useState<'admin' | 'employee'>('admin');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +19,20 @@ export default function Login() {
     setError('');
     try {
       const res = await api.post('/api/auth/login', form);
-      login(res.data);
-      navigate(res.data.role === 'EMPLOYEE' ? '/employee' : '/admin');
+      const user = res.data;
+
+      if (loginType === 'employee' && user.role !== 'EMPLOYEE') {
+        setError('This account is registered as Admin/HR. Please use the Admin/HR login.');
+        return;
+      }
+
+      if (loginType === 'admin' && user.role === 'EMPLOYEE') {
+        setError('This account is registered as an Employee. Please use the Employee login.');
+        return;
+      }
+
+      login(user);
+      navigate(user.role === 'EMPLOYEE' ? '/employee' : '/admin');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
@@ -34,7 +47,55 @@ export default function Login() {
           <Scale size={32} style={{ color: 'var(--accent)' }} />
           <h1 style={styles.logoText}>HR Comply</h1>
         </div>
-        <p style={styles.subtitle}>Sign in to your workspace</p>
+        <p style={styles.subtitle}>
+          {loginType === 'admin' ? 'Admin & HR Portal Login' : 'Employee Portal Login'}
+        </p>
+
+        {/* Tab Toggle */}
+        <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '12px', padding: '4px', marginBottom: '24px', border: '1px solid var(--border)' }}>
+          <button
+            type="button"
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              background: loginType === 'admin' ? 'var(--accent)' : 'transparent',
+              color: loginType === 'admin' ? '#fff' : 'var(--text-secondary)',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onClick={() => {
+              setLoginType('admin');
+              setError('');
+            }}
+          >
+            Admin / HR
+          </button>
+          <button
+            type="button"
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              background: loginType === 'employee' ? 'var(--accent)' : 'transparent',
+              color: loginType === 'employee' ? '#fff' : 'var(--text-secondary)',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onClick={() => {
+              setLoginType('employee');
+              setError('');
+            }}
+          >
+            Employee
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.field}>

@@ -36,6 +36,9 @@ class AuthControllerTest {
     private AuthService authService;
 
     @MockBean
+    private InviteService inviteService;
+
+    @MockBean
     private JwtUtil jwtUtil;
 
     @MockBean

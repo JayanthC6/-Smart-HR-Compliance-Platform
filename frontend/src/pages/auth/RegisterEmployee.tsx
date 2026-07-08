@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
-import { Scale, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function RegisterEmployee() {
   const { login } = useAuth();
@@ -56,7 +56,7 @@ export default function RegisterEmployee() {
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.logo}>
-          <Scale size={32} style={{ color: 'var(--accent)' }} />
+          <img src="/logo.png" alt="HR Comply Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '6px' }} />
           <h1 style={styles.logoText}>HR Comply</h1>
         </div>
         <p style={styles.subtitle}>Complete employee registration</p>

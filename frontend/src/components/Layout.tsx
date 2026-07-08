@@ -9,8 +9,7 @@ import {
   History, 
   Home, 
   Bot, 
-  LogOut, 
-  Scale 
+  LogOut
 } from 'lucide-react';
 
 interface Props { children: ReactNode; }
@@ -38,7 +37,7 @@ export default function Layout({ children }: Props) {
       <aside style={styles.sidebar}>
         {/* Brand */}
         <div style={styles.brand}>
-          <Scale size={24} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+          <img src="/logo.png" alt="HR Comply Logo" style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0, borderRadius: '4px' }} />
           <div>
             <p style={styles.brandText}>HR Comply</p>
             {user?.companyId && (

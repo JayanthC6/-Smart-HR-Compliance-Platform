@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
-import { Scale, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
   const { login } = useAuth();
@@ -33,7 +33,7 @@ export default function Register() {
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.logo}>
-          <Scale size={32} style={{ color: 'var(--accent)' }} />
+          <img src="/logo.png" alt="HR Comply Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '6px' }} />
           <h1 style={styles.logoText}>HR Comply</h1>
         </div>
         <p style={styles.subtitle}>Register your company</p>

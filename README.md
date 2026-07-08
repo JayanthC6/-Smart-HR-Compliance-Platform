@@ -49,7 +49,7 @@ A modern, full-stack HR Compliance and Onboarding multi-tenant SaaS platform bui
    Create a `.env` file in the root directory:
    ```env
    DB_USER=postgres
-   DB_PASSWORD=root123
+   DB_PASSWORD=your_password
    DB_NAME=hrcompliance
    JWT_SECRET=your-super-secret-jwt-key-make-it-long
    JWT_EXPIRATION_MS=86400000
